@@ -29,6 +29,8 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 
+import com.practice.mission1.db.DatabaseOpenHelper;
+
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,11 +39,15 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 
 public class MainActivity extends AppCompatActivity {
-
+    DatabaseOpenHelper dbHelper;
+    final static String dbname = "memo.db";
+    final static int dbVersion = 2;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        dbHelper = new DatabaseOpenHelper(this, dbname, null, dbVersion);
 
         ListView listView;
         CustomChoiceListViewAdapter adapter;
