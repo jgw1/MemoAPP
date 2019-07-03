@@ -10,9 +10,12 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Base64;
+import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +32,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 
+import com.practice.mission1.db.DatabaseAccess;
 import com.practice.mission1.db.DatabaseOpenHelper;
 
 import java.security.MessageDigest;
@@ -39,59 +43,88 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 
 public class MainActivity extends AppCompatActivity {
-    DatabaseOpenHelper dbHelper;
-    final static String dbname = "memo.db";
-    final static int dbVersion = 2;
+    private ListView listView;
+    private DatabaseAccess databaseAccess;
+    private List<memo> memos;
+    private memo memo;
+    private MemoAdapter adapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        this.databaseAccess = DatabaseAccess.getInstance(this);
+        this.listView=(ListView) findViewById(R.id.listview);
+        this.listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                memo memo = memos.get(position);
+                TextView txtMemo = (TextView) view.findViewById(R.id.txtMemo);
+                CheckBox checkBox = (CheckBox)(listView.getChildAt(position)).findViewById(R.id.checkBox);
 
-        dbHelper = new DatabaseOpenHelper(this, dbname, null, dbVersion);
+                if (memo.isFullDisplayed()) {
+                    txtMemo.setText(memo.getShortText());
+                    memo.setFullDisplayed(false);
 
-        ListView listView;
-        CustomChoiceListViewAdapter adapter;
-        adapter = new CustomChoiceListViewAdapter();
+                } else {
+                    txtMemo.setText(memo.getText());
+                    memo.setFullDisplayed(true);
+                }
+            }
+        });
 
-        listView = (ListView) findViewById(R.id.listview);
-        listView.setAdapter(adapter);
-        adapter.addItem(ContextCompat.getDrawable(this, R.drawable.ic_launcher_background),
-                "Date : 2019.07.02","Practice") ;
+        findViewById(R.id.WebPage).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent browser = new Intent(Intent.ACTION_VIEW, Uri.parse("https://m.naver.com"));
+                startActivity(browser);
+            }
+        });
+        findViewById(R.id.add).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                setContentView(R.layout.activity_memo_register);
+                Intent in = new Intent(MainActivity.this, MemoRegister.class);
+                startActivity(in);
+            }
+        });
+        findViewById(R.id.Secret).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                secret_show();
+            }
+        });
+        findViewById(R.id.Delete).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Delete_show();
+            }
+        });
+        findViewById(R.id.Save).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Save_show();
+            }
+        });
 
-    findViewById(R.id.WebPage).setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            Intent browser = new Intent(Intent.ACTION_VIEW, Uri.parse("https://m.naver.com"));
-            startActivity(browser);
-        }
-    });
-    findViewById(R.id.add).setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            setContentView(R.layout.activity_memo_register);
-            Intent in = new Intent(MainActivity.this, MemoRegister.class);
-            startActivity(in);
-        }
-    });
-    findViewById(R.id.Secret).setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            secret_show();
-        }
-    });
-    findViewById(R.id.Delete).setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            Delete_show();
-        }
-    });
-    findViewById(R.id.Save).setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            Save_show();
-        }
-    });
-}
+    }
+    @Override
+    protected void onResume(){
+        super.onResume();
+        databaseAccess.open();
+        this.memos = databaseAccess.getAllMemos();
+        databaseAccess.close();
+        MemoAdapter adapter = new MemoAdapter(this, memos);
+        adapter.notifyDataSetChanged();
+        this.listView.setAdapter(adapter);
+    }
+
+    @Override
+    public void onBackPressed(){
+        setContentView(R.layout.activity_main);
+        Intent in=new Intent(this,MainActivity.class);
+        startActivity(in);
+        finish();
+    }
 
     void secret_show() {
         final EditText edittext = new EditText(this);
@@ -138,17 +171,30 @@ public class MainActivity extends AppCompatActivity {
         builder.setPositiveButton("예",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        //선택한 파일들을 삭제
+                        int A = listView.getChildCount();
+                        ArrayList<String> items = new ArrayList<>();
+                        for(int i=0;i<A;i++){
+                            CheckBox cb = (CheckBox)(listView.getChildAt(i).findViewById(R.id.checkbox));
+                            if (cb.isChecked()){
+                                items.add(Integer.toString(i));
+                            }
+                        }
+                        databaseAccess.delete(memo,items);
+                        adapter.notifyDataSetChanged();
                     }
-                });
+                }
+        );
         builder.setNegativeButton("아니오",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-
+                        setContentView(R.layout.activity_main);
+                        Intent in=new Intent(MainActivity.this,MainActivity.class);
+                        startActivity(in);
                     }
                 });
         builder.show();
     }
+
     void Save_show()
     {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -183,5 +229,43 @@ public class MainActivity extends AppCompatActivity {
         byte[] encVal = c.doFinal(Data.getBytes());
         String encryptedValue = Base64.encodeToString(encVal,Base64.DEFAULT);
         return encryptedValue;
+    }
+
+    public class MemoAdapter extends ArrayAdapter<memo> {
+        public MemoAdapter(Context context, List<memo> objects) {
+            super(context, 0, objects);
+
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+
+            if (convertView == null) {
+                convertView = getLayoutInflater().inflate(R.layout.memo_list_view, parent, false);
+            }
+
+            ImageView btnEdit = (ImageView) convertView.findViewById(R.id.btnEdit);
+            TextView txtDate = (TextView) convertView.findViewById(R.id.txtDate);
+            TextView txtMemo = (TextView) convertView.findViewById(R.id.txtMemo);
+            CheckBox checkBox = (CheckBox) convertView.findViewById(R.id.checkBox);
+            final memo memo = memos.get(position);
+
+            memo.setFullDisplayed(false);
+            txtDate.setText(memo.getDate());
+            txtMemo.setText(memo.getShortText());
+
+
+            btnEdit.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    setContentView(R.layout.activity_memo_register);
+                    Intent intent = new Intent(MainActivity.this, MemoRegister.class);
+                    intent.putExtra("MEMO", memo);
+                    startActivity(intent);
+                }
+            });
+
+            return convertView;
+        }
     }
 }
