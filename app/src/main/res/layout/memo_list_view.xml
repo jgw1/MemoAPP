@@ -1,45 +1,43 @@
-<com.practice.mission1.CheckableLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:padding="10dp"
-    android:orientation="vertical">
+    android:layout_height="match_parent"
+    >
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <ImageView
-            android:id="@+id/btnEdit"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:layout_alignParentRight="true"
-            android:src="@drawable/edit" />
-
-        <TextView
-            android:id="@+id/txtDate"
-            android:layout_width="match_parent"
-            android:layout_height="24dp"
-            android:layout_toLeftOf="@id/btnEdit"
-            android:textSize="15sp"
-            android:gravity="top|center_horizontal"
-            android:text="date"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
-
-        <CheckBox
-            android:id="@+id/checkBox"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentStart="false"
-            android:layout_alignParentBottom="false"
-            android:layout_marginStart="0dp"
-            android:layout_marginBottom="0dp" />
-    </RelativeLayout>
+    <ImageView
+        android:id="@+id/btnEdit"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_alignParentRight="true"
+        android:src="@drawable/edit" />
 
     <TextView
-        android:layout_marginTop="10dp"
-        android:id="@+id/txtMemo"
+        android:id="@+id/txtDate"
         android:layout_width="match_parent"
+        android:layout_height="24dp"
+        android:layout_toLeftOf="@id/btnEdit"
+        android:gravity="top|center_horizontal"
+        android:text="date"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:textSize="15sp" />
+
+    <CheckBox
+        android:id="@+id/checkBox"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentStart="false"
+        android:layout_alignParentBottom="false"
+        android:layout_marginStart="0dp"
+        android:layout_marginBottom="0dp" />
+
+    <TextView
+        android:id="@+id/txtMemo"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/txtDate"
+        android:layout_marginLeft="1dp"
+        android:layout_marginTop="2dp"
+        android:layout_marginEnd="216dp"
+        android:layout_toRightOf="@id/checkBox"
         android:text="Medium Text"
         android:textAppearance="?android:attr/textAppearanceMedium" />
-</com.practice.mission1.CheckableLinearLayout>
+</RelativeLayout>

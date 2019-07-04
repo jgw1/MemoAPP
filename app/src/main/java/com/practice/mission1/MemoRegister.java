@@ -13,7 +13,7 @@ import com.practice.mission1.db.DatabaseAccess;
 
 public class MemoRegister extends AppCompatActivity {
     private EditText editMemo;
-    private memo memo;
+    private MEMO memo;
     private Button save;
 
     @Override
@@ -25,7 +25,7 @@ public class MemoRegister extends AppCompatActivity {
 
         Bundle bundle = getIntent().getExtras();
         if(bundle != null) {
-            memo = (memo) bundle.get("MEMO");
+            memo = (MEMO) bundle.get("MEMO");
             if(memo != null) {
                 this.editMemo.setText(memo.getText());
             }
@@ -49,7 +49,7 @@ public class MemoRegister extends AppCompatActivity {
         findViewById(R.id.Cancel).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-               goToMain();
+                goToMain();
             }
         });
     }
@@ -67,14 +67,14 @@ public class MemoRegister extends AppCompatActivity {
     public void Save() {
         DatabaseAccess databaseAccess = DatabaseAccess.getInstance(this);
         databaseAccess.open();
-        if(memo == null) {
-            memo temp = new memo();
+        MEMO temp = new MEMO();
+            if(memo == null) {
             temp.setText(editMemo.getText().toString());
             databaseAccess.save(temp);
         } else {
             // Update the memo
-            memo.setText(editMemo.getText().toString());
-            databaseAccess.update(memo);
+                memo.setText(editMemo.getText().toString());
+                databaseAccess.update(memo);
         }
         databaseAccess.close();
         Toast.makeText(this,"저장이 되었습니다.",Toast.LENGTH_SHORT).show();
@@ -82,10 +82,5 @@ public class MemoRegister extends AppCompatActivity {
 
 
     }
-
-
-
-
-
 
 }

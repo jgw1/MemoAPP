@@ -5,6 +5,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -30,6 +31,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 import com.practice.mission1.db.DatabaseAccess;
@@ -45,8 +47,8 @@ import javax.crypto.spec.SecretKeySpec;
 public class MainActivity extends AppCompatActivity {
     private ListView listView;
     private DatabaseAccess databaseAccess;
-    private List<memo> memos;
-    private memo memo;
+    private List<MEMO> memos;
+    private MEMO memo;
     private MemoAdapter adapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +59,8 @@ public class MainActivity extends AppCompatActivity {
         this.listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                memo memo = memos.get(position);
+
+                MEMO memo = memos.get(position);
                 TextView txtMemo = (TextView) view.findViewById(R.id.txtMemo);
                 CheckBox checkBox = (CheckBox)(listView.getChildAt(position)).findViewById(R.id.checkBox);
 
@@ -71,6 +74,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+
+
 
         findViewById(R.id.WebPage).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -96,7 +102,21 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.Delete).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Delete_show();
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle("선택한 파일들을 삭제하시겠습니까?");
+                builder.setPositiveButton("예",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        }
+                );
+                builder.setNegativeButton("아니오",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                            onResume();
+                            }
+                        });
+                builder.show();
             }
         });
         findViewById(R.id.Save).setOnClickListener(new View.OnClickListener() {
@@ -164,37 +184,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    void Delete_show()
-    {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("선택한 파일들을 삭제하시겠습니까?");
-        builder.setPositiveButton("예",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        int A = listView.getChildCount();
-                        ArrayList<String> items = new ArrayList<>();
-                        for(int i=0;i<A;i++){
-                            CheckBox cb = (CheckBox)(listView.getChildAt(i).findViewById(R.id.checkbox));
-                            if (cb.isChecked()){
-                                items.add(Integer.toString(i));
-                            }
-                        }
-                        databaseAccess.delete(memo,items);
-                        adapter.notifyDataSetChanged();
-                    }
-                }
-        );
-        builder.setNegativeButton("아니오",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        setContentView(R.layout.activity_main);
-                        Intent in=new Intent(MainActivity.this,MainActivity.class);
-                        startActivity(in);
-                    }
-                });
-        builder.show();
-    }
-
     void Save_show()
     {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -231,29 +220,55 @@ public class MainActivity extends AppCompatActivity {
         return encryptedValue;
     }
 
-    public class MemoAdapter extends ArrayAdapter<memo> {
-        public MemoAdapter(Context context, List<memo> objects) {
-            super(context, 0, objects);
+    public class MemoAdapter extends ArrayAdapter<MEMO> {
 
+        public MemoAdapter(Context context, List<MEMO> objects) {
+            super(context, 0, objects);
+        }
+        private class ViewHolder{
+            CheckBox checkBox;
+        }
+        @Override
+        public com.practice.mission1.MEMO getItem(int position) {
+            return super.getItem(position);
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        public View getView(final int position, View convertView, ViewGroup parent) {
+            ViewHolder holder = null;
 
             if (convertView == null) {
-                convertView = getLayoutInflater().inflate(R.layout.memo_list_view, parent, false);
+                LayoutInflater vi = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                convertView = vi.inflate(R.layout.memo_list_view, null);
+
+                holder = new ViewHolder();
+                holder.checkBox = (CheckBox) convertView.findViewById(R.id.checkBox);
+                convertView.setTag(holder);
+
+                holder.checkBox.setOnClickListener(new View.OnClickListener(){
+                    public void onClick(View v){
+                        CheckBox cb = (CheckBox) v;
+                        Toast.makeText(getApplicationContext(),"CLicked on CheckBox: "+cb.getText() + "is" + cb.isChecked(),Toast.LENGTH_SHORT).show();
+                        cb.setSelected(cb.isChecked());
+
+                    }
+                });
+            }
+            else{
+                holder = (ViewHolder) convertView.getTag();
             }
 
             ImageView btnEdit = (ImageView) convertView.findViewById(R.id.btnEdit);
             TextView txtDate = (TextView) convertView.findViewById(R.id.txtDate);
             TextView txtMemo = (TextView) convertView.findViewById(R.id.txtMemo);
-            CheckBox checkBox = (CheckBox) convertView.findViewById(R.id.checkBox);
-            final memo memo = memos.get(position);
+
+
+
+            final MEMO memo = memos.get(position);
 
             memo.setFullDisplayed(false);
             txtDate.setText(memo.getDate());
             txtMemo.setText(memo.getShortText());
-
 
             btnEdit.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -268,4 +283,5 @@ public class MainActivity extends AppCompatActivity {
             return convertView;
         }
     }
+
 }

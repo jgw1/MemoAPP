@@ -1,25 +1,34 @@
 package com.practice.mission1;
 
+import android.widget.CheckBox;
+
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class memo implements Serializable {
+public class MEMO implements Serializable {
+
     private Date date;
     protected String text;
     private boolean fullDisplayed;
+    private boolean Checked = false;
     private static DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy 'at' hh:mm aaa");
 
-    public memo() {
-        this.date = new Date();
-    }
 
-    public memo(long time, String text) {
+    public MEMO(long time, String text,boolean isChecked) {
         this.date = new Date(time);
+        this.Checked = Checked;
         this.text = text;
     }
 
+    public void setisChecked(boolean isChecked){
+        this.Checked = Checked;
+    }
+
+    public boolean isChecked(){
+        return Checked;
+    }
     public String getDate() {
         return dateFormat.format(date);
     }
@@ -35,6 +44,7 @@ public class memo implements Serializable {
     public void setText(String text) {
         this.text = text;
     }
+
 
     public String getText() {
         return this.text;
@@ -62,6 +72,3 @@ public class memo implements Serializable {
         return this.text;
     }
 }
-
-
-

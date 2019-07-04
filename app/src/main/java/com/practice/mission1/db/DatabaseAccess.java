@@ -5,7 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.practice.mission1.memo;
+import com.practice.mission1.MEMO;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -16,7 +16,7 @@ public class DatabaseAccess {
     private DatabaseOpenHelper openHelper;
     private static volatile DatabaseAccess instance;
 
-    private DatabaseAccess(Context context){
+    private DatabaseAccess(Context context) {
         this.openHelper = new DatabaseOpenHelper(context);
     }
 
@@ -36,15 +36,15 @@ public class DatabaseAccess {
             this.database.close();
         }
     }
-    public void save(memo memo) {
-        ContentValues values = new ContentValues();
 
+    public void save(MEMO memo) {
+        ContentValues values = new ContentValues();
         values.put("date", memo.getTime());
         values.put("memo", memo.getText());
         database.insert(DatabaseOpenHelper.TABLE, null, values);
     }
 
-    public void update(memo memo) {
+    public void update(MEMO memo) {
         ContentValues values = new ContentValues();
         values.put("date", new Date().getTime());
         values.put("memo", memo.getText());
@@ -52,9 +52,9 @@ public class DatabaseAccess {
         database.update(DatabaseOpenHelper.TABLE, values, "date = ?", new String[]{date});
     }
 
-    public void delete(memo memo, ArrayList list) {
-        String date = Long.toString(memo.getTime());
-        database.execSQL("DELETE FROM " + DatabaseOpenHelper.TABLE+"WHERE _id= " + list + ";");
+    public void delete(int id) {
+
+        database.delete(DatabaseOpenHelper.TABLE, "id" + "=" +id ,null);
     }
 
     public List getAllMemos() {
@@ -62,9 +62,9 @@ public class DatabaseAccess {
         Cursor cursor = database.rawQuery("SELECT * From memo ORDER BY date DESC", null);
         cursor.moveToFirst();
         while (!cursor.isAfterLast()) {
-            long time = cursor.getLong(0);
-            String text = cursor.getString(1);
-            memos.add(new memo(time, text));
+            long time = cursor.getLong(1);
+            String text = cursor.getString(2);
+            memos.add(new MEMO(time, text));
             cursor.moveToNext();
         }
         cursor.close();
