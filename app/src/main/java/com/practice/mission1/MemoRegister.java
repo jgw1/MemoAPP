@@ -15,11 +15,12 @@ public class MemoRegister extends AppCompatActivity {
     private EditText editMemo;
     private MEMO memo;
     private Button save;
-
+    private DatabaseAccess databaseAccess;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_memo_register);
+        this.databaseAccess = DatabaseAccess.getInstance(this);
         this.save = (Button) findViewById(R.id.Save);
         this.editMemo = (EditText) findViewById(R.id.editMemo);
 
@@ -30,6 +31,12 @@ public class MemoRegister extends AppCompatActivity {
                 this.editMemo.setText(memo.getText());
             }
         }
+        findViewById(R.id.secret_checkBox).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
         findViewById(R.id.back).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -42,7 +49,19 @@ public class MemoRegister extends AppCompatActivity {
         this.save.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                Save();
+                databaseAccess.open();
+                MEMO temp = new MEMO();
+                if(memo == null) {
+                    temp.setText(editMemo.getText().toString());
+                    databaseAccess.save(temp);
+                } else {
+                    // Update the memo
+                    memo.setText(editMemo.getText().toString());
+                    databaseAccess.update(memo);
+                }
+                databaseAccess.close();
+                Toast.makeText(getApplicationContext(),"저장이 되었습니다.",Toast.LENGTH_SHORT).show();
+                finish();
                 goToMain();
             }
         });
@@ -63,24 +82,6 @@ public class MemoRegister extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Intent in = new Intent(MemoRegister.this, MainActivity.class);
         startActivity(in);
+        finish();
     }
-    public void Save() {
-        DatabaseAccess databaseAccess = DatabaseAccess.getInstance(this);
-        databaseAccess.open();
-        MEMO temp = new MEMO();
-            if(memo == null) {
-            temp.setText(editMemo.getText().toString());
-            databaseAccess.save(temp);
-        } else {
-            // Update the memo
-                memo.setText(editMemo.getText().toString());
-                databaseAccess.update(memo);
-        }
-        databaseAccess.close();
-        Toast.makeText(this,"저장이 되었습니다.",Toast.LENGTH_SHORT).show();
-        this.finish();
-
-
-    }
-
 }

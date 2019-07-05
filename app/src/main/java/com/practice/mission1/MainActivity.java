@@ -59,24 +59,20 @@ public class MainActivity extends AppCompatActivity {
         this.listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-
-                MEMO memo = memos.get(position);
-                TextView txtMemo = (TextView) view.findViewById(R.id.txtMemo);
-                CheckBox checkBox = (CheckBox)(listView.getChildAt(position)).findViewById(R.id.checkBox);
-
-                if (memo.isFullDisplayed()) {
-                    txtMemo.setText(memo.getShortText());
-                    memo.setFullDisplayed(false);
-
-                } else {
-                    txtMemo.setText(memo.getText());
-                    memo.setFullDisplayed(true);
+                Object itemObject = adapterView.getAdapter().getItem(position);
+                MEMO memo = (MEMO)itemObject;
+                CheckBox itemCheckBox = (CheckBox)view.findViewById(R.id.checkBox);
+                if(itemCheckBox.isChecked()){
+                    itemCheckBox.setChecked(false);
+                    memo.setChecked(false);
                 }
+                else{
+                    itemCheckBox.setChecked(true);
+                    memo.setChecked(true);
+                }
+
             }
         });
-
-
-
 
         findViewById(R.id.WebPage).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -107,13 +103,24 @@ public class MainActivity extends AppCompatActivity {
                 builder.setPositiveButton("예",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
+                                int size = memos.size();
+                                for (int i=0;i<size;i++){
+                                    MEMO memo = memos.get(i);
+                                    if(memo.isChecked())
+                                    {
+                                        memos.remove(i);
+                                        i--;
+                                        size=memos.size();
+                                    }
+                                }
+                                adapter.notifyDataSetChanged();
                             }
                         }
                 );
                 builder.setNegativeButton("아니오",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
-                            onResume();
+                                onResume();
                             }
                         });
                 builder.show();
@@ -161,12 +168,15 @@ public class MainActivity extends AppCompatActivity {
                                 public void onClick(DialogInterface dialog, int which) {
                                     SharedPreferences preference = getSharedPreferences("a", MODE_PRIVATE);
                                     String val = preference.getString("Password", null);
+                                    val = val.replaceAll("\n","");
                                     String locker = null;
                                     if (val != null)
 
                                         try {
                                             locker = edittext.getText().toString();
                                             locker = encrypt(locker, "abcdefg12354545d");
+                                            locker.trim();
+                                            locker = locker.replaceAll("\n","");
                                         } catch (Exception e) {
                                             e.printStackTrace();
                                         }

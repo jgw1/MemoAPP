@@ -26,7 +26,6 @@ import javax.crypto.spec.SecretKeySpec;
 public class AppLock extends AppCompatActivity {
     EditText pwedit;
     String abs;
-    String password = "asdfgasldgasdg";
     @Override
 
     protected void onCreate(Bundle savedInstanceState) {

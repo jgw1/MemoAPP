@@ -62,8 +62,8 @@ public class DatabaseAccess {
         Cursor cursor = database.rawQuery("SELECT * From memo ORDER BY date DESC", null);
         cursor.moveToFirst();
         while (!cursor.isAfterLast()) {
-            long time = cursor.getLong(1);
-            String text = cursor.getString(2);
+            long time = cursor.getLong(0);
+            String text = cursor.getString(1);
             memos.add(new MEMO(time, text));
             cursor.moveToNext();
         }
