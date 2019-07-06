@@ -12,8 +12,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.location.OnNmeaMessageListener;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Base64;
 import android.util.Log;
 import android.util.SparseBooleanArray;
@@ -32,11 +34,14 @@ import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
-
-
 import com.practice.mission1.db.DatabaseAccess;
 import com.practice.mission1.db.DatabaseOpenHelper;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,17 +65,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
                 Object itemObject = adapterView.getAdapter().getItem(position);
-                MEMO memo = (MEMO)itemObject;
-                CheckBox itemCheckBox = (CheckBox)view.findViewById(R.id.checkBox);
-                if(itemCheckBox.isChecked()){
-                    itemCheckBox.setChecked(false);
-                    memo.setChecked(false);
-                }
-                else{
-                    itemCheckBox.setChecked(true);
-                    memo.setChecked(true);
-                }
-
+                final MEMO memo = (MEMO)itemObject;
+                final CheckBox itemCheckBox = (CheckBox)view.findViewById(R.id.checkBox);
+                adapter.notifyDataSetChanged();
             }
         });
 
@@ -108,11 +105,16 @@ public class MainActivity extends AppCompatActivity {
                                     MEMO memo = memos.get(i);
                                     if(memo.isChecked())
                                     {
+                                        databaseAccess.open();
+                                        databaseAccess.delete(memo);
+                                        databaseAccess.close();
+
                                         memos.remove(i);
                                         i--;
                                         size=memos.size();
                                     }
                                 }
+                                ArrayAdapter<MEMO> adapter = (ArrayAdapter<MEMO>) listView.getAdapter();
                                 adapter.notifyDataSetChanged();
                             }
                         }
@@ -132,15 +134,15 @@ public class MainActivity extends AppCompatActivity {
                 Save_show();
             }
         });
-
     }
+
     @Override
     protected void onResume(){
         super.onResume();
         databaseAccess.open();
         this.memos = databaseAccess.getAllMemos();
         databaseAccess.close();
-        MemoAdapter adapter = new MemoAdapter(this, memos);
+        MemoAdapter adapter = new MemoAdapter(this, memos,listView);
         adapter.notifyDataSetChanged();
         this.listView.setAdapter(adapter);
     }
@@ -201,13 +203,29 @@ public class MainActivity extends AppCompatActivity {
         builder.setPositiveButton("예",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        //선택한 파일들을 삭제
+                        int size = memos.size();
+                        for (int i=0;i<size;i++){
+                            MEMO memo = memos.get(i);
+                            if(memo.isChecked()){
+                                String MemoText = memo.getShortText();
+                                File saveFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/data");
+                                try{
+                                    String Date = memo.getDate();
+                                    BufferedWriter buf = new BufferedWriter(new FileWriter(saveFile+MemoText+".txt",true));
+                                    buf.append(MemoText);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+
+                            }
+
+                        }
                     }
                 });
         builder.setNegativeButton("아니오",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-
+                        onResume();
                     }
                 });
         builder.show();
@@ -230,13 +248,25 @@ public class MainActivity extends AppCompatActivity {
         return encryptedValue;
     }
 
-    public class MemoAdapter extends ArrayAdapter<MEMO> {
 
-        public MemoAdapter(Context context, List<MEMO> objects) {
-            super(context, 0, objects);
+    public class MemoAdapter extends ArrayAdapter<MEMO> {
+        public Context context;
+        private List mList;
+        private ListView mListView;
+
+        public MemoAdapter(Context context,List<MEMO> list,ListView listview) {
+            super(context, 0, list);
+            this.context = context;
+            this.mList = list;
+            this.mListView = listview;
+
         }
+
         private class ViewHolder{
-            CheckBox checkBox;
+            public ImageView btnEdit;
+            public TextView txtMemo;
+            public TextView txtDate;
+            public CheckBox checkBox;
         }
         @Override
         public com.practice.mission1.MEMO getItem(int position) {
@@ -252,35 +282,37 @@ public class MainActivity extends AppCompatActivity {
                 convertView = vi.inflate(R.layout.memo_list_view, null);
 
                 holder = new ViewHolder();
+                holder.btnEdit = (ImageView) convertView.findViewById(R.id.btnEdit);
                 holder.checkBox = (CheckBox) convertView.findViewById(R.id.checkBox);
+                holder.txtMemo = (TextView) convertView.findViewById(R.id.txtMemo);
+                holder.txtDate = (TextView) convertView.findViewById(R.id.txtDate);
+
                 convertView.setTag(holder);
 
-                holder.checkBox.setOnClickListener(new View.OnClickListener(){
-                    public void onClick(View v){
-                        CheckBox cb = (CheckBox) v;
-                        Toast.makeText(getApplicationContext(),"CLicked on CheckBox: "+cb.getText() + "is" + cb.isChecked(),Toast.LENGTH_SHORT).show();
-                        cb.setSelected(cb.isChecked());
-
-                    }
-                });
             }
-            else{
-                holder = (ViewHolder) convertView.getTag();
-            }
-
-            ImageView btnEdit = (ImageView) convertView.findViewById(R.id.btnEdit);
-            TextView txtDate = (TextView) convertView.findViewById(R.id.txtDate);
-            TextView txtMemo = (TextView) convertView.findViewById(R.id.txtMemo);
-
-
+            holder = (ViewHolder) convertView.getTag();
 
             final MEMO memo = memos.get(position);
 
-            memo.setFullDisplayed(false);
-            txtDate.setText(memo.getDate());
-            txtMemo.setText(memo.getShortText());
 
-            btnEdit.setOnClickListener(new View.OnClickListener() {
+            memo.setFullDisplayed(false);
+
+            holder.checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                        if(isChecked){
+                            memo.setChecked(true);
+                    }
+                        else{
+                            memo.setChecked(false);
+                        }
+                }
+            });
+
+            holder.txtMemo.setText(memo.getShortText());
+            holder.txtDate.setText(memo.getDate());
+            holder.checkBox.setChecked(memo.isChecked());
+            holder.btnEdit.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     setContentView(R.layout.activity_memo_register);

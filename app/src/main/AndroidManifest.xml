@@ -20,11 +20,10 @@
             </intent-filter>
         </activity>
         <activity android:name=".AppLock" />
-        <activity android:name=".MainActivity"
-            android:screenOrientation="portrait">
-
-        </activity>
-        <activity android:name=".MemoRegister"></activity>
+        <activity
+            android:name=".MainActivity"
+            android:screenOrientation="portrait"></activity>
+        <activity android:name=".MemoRegister" />
     </application>
 
 </manifest>

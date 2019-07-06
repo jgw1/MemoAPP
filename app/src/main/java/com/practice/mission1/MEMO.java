@@ -18,6 +18,7 @@ public class MEMO implements Serializable {
     public MEMO(long time, String text) {
         this.date = new Date(time);
         this.text = text;
+        this.checked = checked;
     }
 
     public MEMO() {

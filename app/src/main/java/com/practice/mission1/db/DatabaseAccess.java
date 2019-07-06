@@ -52,9 +52,9 @@ public class DatabaseAccess {
         database.update(DatabaseOpenHelper.TABLE, values, "date = ?", new String[]{date});
     }
 
-    public void delete(int id) {
-
-        database.delete(DatabaseOpenHelper.TABLE, "id" + "=" +id ,null);
+    public void delete(MEMO memo) {
+        String date = Long.toString(memo.getTime());
+        database.delete(DatabaseOpenHelper.TABLE, "date = ?", new String[]{date});
     }
 
     public List getAllMemos() {

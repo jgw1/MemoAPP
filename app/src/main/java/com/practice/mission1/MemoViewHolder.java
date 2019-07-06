@@ -9,6 +9,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class MemoViewHolder extends RecyclerView.ViewHolder {
+
+
     public MemoViewHolder(View itemView) {
         super(itemView);
     }
