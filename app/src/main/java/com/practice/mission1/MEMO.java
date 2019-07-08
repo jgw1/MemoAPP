@@ -8,17 +8,17 @@ import java.util.Date;
 public class MEMO implements Serializable {
 
     private Date date;
-    private String secret;
+    private int secret = 0;
     protected String text;
     private boolean fullDisplayed;
     private static DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy 'at' hh:mm aaa");
     private boolean checked = false;
+    private static DateFormat date_Format = new SimpleDateFormat("yyyy-mm-dd");
 
-
-    public MEMO(long time, String text) {
+    public MEMO(long time, String text,int secret) {
         this.date = new Date(time);
         this.text = text;
-        this.checked = checked;
+        this.secret = secret;
     }
 
     public MEMO() {
@@ -35,7 +35,9 @@ public class MEMO implements Serializable {
     public String getDate() {
         return dateFormat.format(date);
     }
-
+    public String getDate1(){
+        return date_Format.format(date);
+    }
     public long getTime() {
         return date.getTime();
     }
@@ -44,11 +46,11 @@ public class MEMO implements Serializable {
         this.date = new Date(time);
     }
 
-    public String getSecret(){
-        return this.secret = secret;
+    public int getSecret(){
+        return secret;
     }
 
-    public void setSecret(String secret){
+    public void setSecret(int secret){
         this.secret =secret;
     }
 

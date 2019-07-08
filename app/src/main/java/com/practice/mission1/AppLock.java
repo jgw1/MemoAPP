@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Base64;
 import android.view.View;
@@ -33,8 +34,11 @@ public class AppLock extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         SharedPreferences preference = getSharedPreferences("a", MODE_PRIVATE);
-
         int firstviewshow = preference.getInt("First", 0);
+        SharedPreferences secret = getSharedPreferences("b", MODE_PRIVATE);
+        SharedPreferences.Editor editor = secret.edit();
+        editor.putString("SecretMode", "0");
+        editor.commit();
         if (firstviewshow == 0) {
             setContentView(R.layout.activity_app_lock);
             pwedit = findViewById(R.id.edit1);
@@ -43,8 +47,8 @@ public class AppLock extends AppCompatActivity {
                 public void onClick(View v) {
                     savePassword();
                     setContentView(R.layout.activity_main);
-                    Intent in = new Intent(AppLock.this,MainActivity.class);
-                    in.putExtra("Password",pwedit.getText().toString());
+                    Intent in = new Intent(AppLock.this, MainActivity.class);
+                    in.putExtra("Password", pwedit.getText().toString());
                     startActivity(in);
                 }
             });
@@ -56,6 +60,7 @@ public class AppLock extends AppCompatActivity {
             startActivity(in);
         }
     }
+
 
     private void savePassword() {
         String password = "abcdefg12354545d";

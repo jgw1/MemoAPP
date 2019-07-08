@@ -6,7 +6,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.practice.mission1.db.DatabaseAccess;
@@ -16,6 +19,8 @@ public class MemoRegister extends AppCompatActivity {
     private MEMO memo;
     private Button save;
     private DatabaseAccess databaseAccess;
+    private CheckBox secret_checkBox;
+    int secret;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -23,20 +28,27 @@ public class MemoRegister extends AppCompatActivity {
         this.databaseAccess = DatabaseAccess.getInstance(this);
         this.save = (Button) findViewById(R.id.Save);
         this.editMemo = (EditText) findViewById(R.id.editMemo);
-
+        this.secret_checkBox = (CheckBox) findViewById(R.id.secret_checkBox);
         Bundle bundle = getIntent().getExtras();
         if(bundle != null) {
             memo = (MEMO) bundle.get("MEMO");
             if(memo != null) {
                 this.editMemo.setText(memo.getText());
+                this.secret_checkBox.setChecked(false);
             }
         }
-        findViewById(R.id.secret_checkBox).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
 
+        secret_checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                if(isChecked){
+                    secret = 1;
+                }
+                else
+                    secret = 0;
             }
         });
+
         findViewById(R.id.back).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -53,10 +65,12 @@ public class MemoRegister extends AppCompatActivity {
                 MEMO temp = new MEMO();
                 if(memo == null) {
                     temp.setText(editMemo.getText().toString());
+                    temp.setSecret(secret);
                     databaseAccess.save(temp);
                 } else {
                     // Update the memo
                     memo.setText(editMemo.getText().toString());
+                    temp.setSecret(secret);
                     databaseAccess.update(memo);
                 }
                 databaseAccess.close();

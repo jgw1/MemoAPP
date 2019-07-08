@@ -41,6 +41,7 @@ public class DatabaseAccess {
         ContentValues values = new ContentValues();
         values.put("date", memo.getTime());
         values.put("memo", memo.getText());
+        values.put("secret",memo.getSecret());
         database.insert(DatabaseOpenHelper.TABLE, null, values);
     }
 
@@ -48,6 +49,7 @@ public class DatabaseAccess {
         ContentValues values = new ContentValues();
         values.put("date", new Date().getTime());
         values.put("memo", memo.getText());
+        values.put("secret",memo.getSecret());
         String date = Long.toString(memo.getTime());
         database.update(DatabaseOpenHelper.TABLE, values, "date = ?", new String[]{date});
     }
@@ -64,7 +66,26 @@ public class DatabaseAccess {
         while (!cursor.isAfterLast()) {
             long time = cursor.getLong(0);
             String text = cursor.getString(1);
-            memos.add(new MEMO(time, text));
+            int secret = cursor.getInt(2);
+
+            memos.add(new MEMO(time, text,secret));
+            cursor.moveToNext();
+        }
+        cursor.close();
+        return memos;
+    }
+    public List getOnlyGeneralMemos() {
+        List memos = new ArrayList<>();
+        Cursor cursor = database.rawQuery("SELECT * From memo ORDER BY date DESC", null);
+        cursor.moveToFirst();
+        String text;
+        while (!cursor.isAfterLast()) {
+            long time = cursor.getLong(0);
+            int secret = cursor.getInt(2);
+            if (secret == 1)
+                text = "";
+            else text = cursor.getString(1);
+            memos.add(new MEMO(time, text,secret));
             cursor.moveToNext();
         }
         cursor.close();

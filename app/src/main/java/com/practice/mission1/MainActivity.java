@@ -1,49 +1,34 @@
 package com.practice.mission1;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.location.OnNmeaMessageListener;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Base64;
-import android.util.Log;
-import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
-import com.practice.mission1.db.DatabaseAccess;
-import com.practice.mission1.db.DatabaseOpenHelper;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.kakao.kakaolink.KakaoLink;
+import com.kakao.kakaolink.KakaoTalkLinkMessageBuilder;
+import com.kakao.util.KakaoParameterException;
+import com.practice.mission1.db.DatabaseAccess;
+
 import java.security.MessageDigest;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.crypto.Cipher;
@@ -55,9 +40,16 @@ public class MainActivity extends AppCompatActivity {
     private List<MEMO> memos;
     private MEMO memo;
     private MemoAdapter adapter;
+    private DownLoadFileTask task;
+    //private Tracker mTracker;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //GoogleAnalyticsApplication application = (GoogleAnalyticsApplication) getApplication();
+        //mTracker = application.getDefaultTracker();
+
         setContentView(R.layout.activity_main);
         this.databaseAccess = DatabaseAccess.getInstance(this);
         this.listView=(ListView) findViewById(R.id.listview);
@@ -70,7 +62,6 @@ public class MainActivity extends AppCompatActivity {
                 adapter.notifyDataSetChanged();
             }
         });
-
         findViewById(R.id.WebPage).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -103,8 +94,10 @@ public class MainActivity extends AppCompatActivity {
                                 int size = memos.size();
                                 for (int i=0;i<size;i++){
                                     MEMO memo = memos.get(i);
+
                                     if(memo.isChecked())
                                     {
+
                                         databaseAccess.open();
                                         databaseAccess.delete(memo);
                                         databaseAccess.close();
@@ -134,13 +127,47 @@ public class MainActivity extends AppCompatActivity {
                 Save_show();
             }
         });
+        findViewById(R.id.kakaotalk).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int size = memos.size();
+                for (int i=0;i<size;i++){
+                    MEMO memo = memos.get(i);
+                    if(memo.isChecked()){
+                        try {
+                            final KakaoLink kakaoLink = (KakaoLink) KakaoLink.getKakaoLink(MainActivity.this);
+                            final KakaoTalkLinkMessageBuilder kakaobuilder = kakaoLink.createKakaoTalkLinkMessageBuilder();
+
+                            kakaobuilder.addText("카카오링크 테스트");
+                            kakaobuilder.addText(memo.getShortText());
+                            kakaobuilder.addAppButton("앱 실행");
+                            kakaoLink.sendMessage(kakaobuilder,MainActivity.this);
+
+                        } catch (KakaoParameterException e) {
+                            e.printStackTrace();
+                        }
+
+
+                    }
+                }
+            }
+        });
     }
 
     @Override
     protected void onResume(){
         super.onResume();
+        //mTracker.setScreenName(String.valueOf(MainActivity.this));
         databaseAccess.open();
-        this.memos = databaseAccess.getAllMemos();
+        SharedPreferences secret = getSharedPreferences("b", MODE_PRIVATE);
+        String  val = secret.getString("SecretMode", null);
+
+        if(val.equals("1")){
+            this.memos = databaseAccess.getAllMemos();
+        }
+        else{
+            this.memos = databaseAccess.getOnlyGeneralMemos();
+        }
         databaseAccess.close();
         MemoAdapter adapter = new MemoAdapter(this, memos,listView);
         adapter.notifyDataSetChanged();
@@ -157,45 +184,49 @@ public class MainActivity extends AppCompatActivity {
 
     void secret_show() {
         final EditText edittext = new EditText(this);
-        Switch sw = (Switch) findViewById(R.id.Secret);
-        sw.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        Button sw = (Button) findViewById(R.id.Secret);
+        sw.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-                if (isChecked) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                    builder.setTitle("비밀번호를 입력하세요");
-                    builder.setView(edittext);
-                    builder.setPositiveButton("입력",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-                                    SharedPreferences preference = getSharedPreferences("a", MODE_PRIVATE);
-                                    String val = preference.getString("Password", null);
-                                    val = val.replaceAll("\n","");
-                                    String locker = null;
-                                    if (val != null)
-
-                                        try {
-                                            locker = edittext.getText().toString();
-                                            locker = encrypt(locker, "abcdefg12354545d");
-                                            locker.trim();
-                                            locker = locker.replaceAll("\n","");
-                                        } catch (Exception e) {
-                                            e.printStackTrace();
+            public void onClick(View v) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setTitle("비밀번호를 입력하세요");
+                builder.setView(edittext);
+                builder.setPositiveButton("입력",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                SharedPreferences preference = getSharedPreferences("a", MODE_PRIVATE);
+                                String val = preference.getString("Password", null);
+                                val = val.replaceAll("\n","");
+                                val = val.trim();
+                                if (val != null)
+                                    try {
+                                        String locker = edittext.getText().toString();
+                                        locker = encrypt(locker, "abcdefg12354545d");
+                                        locker = locker.replaceAll("\n","");
+                                        locker = locker.trim();
+                                        if(locker.equals(val)){
+                                            SharedPreferences secret = getSharedPreferences("b", MODE_PRIVATE);
+                                            SharedPreferences.Editor editor = secret.edit();
+                                            editor.putString("SecretMode", "1");
+                                            editor.commit();
+                                            onResume();
                                         }
-                                }
-                            });
-                    builder.setNegativeButton("취소",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int which) {
-
-                                }
-                            });
-                    builder.show();
-                }
+                                        else{
+                                        }
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                            }
+                        });
+                builder.setNegativeButton("취소",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        });
+                builder.show();
             }
         });
-    }
-
+    };
     void Save_show()
     {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -205,21 +236,13 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         int size = memos.size();
                         for (int i=0;i<size;i++){
-                            MEMO memo = memos.get(i);
+                            final MEMO memo = memos.get(i);
                             if(memo.isChecked()){
-                                String MemoText = memo.getShortText();
-                                File saveFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/data");
-                                try{
-                                    String Date = memo.getDate();
-                                    BufferedWriter buf = new BufferedWriter(new FileWriter(saveFile+MemoText+".txt",true));
-                                    buf.append(MemoText);
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-
+                                task = new DownLoadFileTask(MainActivity.this);
+                                task.execute(memo.getDate1(),memo.getShortText());
                             }
-
                         }
+
                     }
                 });
         builder.setNegativeButton("아니오",
@@ -325,5 +348,4 @@ public class MainActivity extends AppCompatActivity {
             return convertView;
         }
     }
-
 }

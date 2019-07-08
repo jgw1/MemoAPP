@@ -15,15 +15,7 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
         />
-    <Switch
-        android:id="@+id/Secret"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginStart="0dp"
-        android:layout_marginTop="11dp"
-        android:text="secret" />
+
     <Button
         android:id="@+id/WebPage"
         android:layout_width="wrap_content"
@@ -63,6 +55,26 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
     </LinearLayout>
+
+    <Button
+        android:id="@+id/kakaotalk"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="153dp"
+        android:layout_marginBottom="2dp"
+        android:text="KAKAO" />
+
+    <Button
+        android:id="@+id/Secret"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="11dp"
+        android:layout_marginTop="3dp"
+        android:text="Secret" />
 
 
 </RelativeLayout>
